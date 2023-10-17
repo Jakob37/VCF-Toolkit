@@ -1,0 +1,4 @@
+#!/bin/bash
+
+zgrep "^##" $1 | less
+

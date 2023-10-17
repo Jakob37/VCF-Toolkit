@@ -1,0 +1,7 @@
+#!/bin/bash
+
+nbr_comments=$(zgrep "^##" $1 | wc -l)
+echo " ${nbr_comments} ## rows"
+zgrep -v "^##" $1 | grep -m 1 "^#"
+zgrep -v "^#" $1 | cut -f1 | uniq -c
+

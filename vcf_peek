@@ -1,0 +1,3 @@
+#!/bin/bash
+
+zgrep -m1 -A1 \"#CHROM\"" $1

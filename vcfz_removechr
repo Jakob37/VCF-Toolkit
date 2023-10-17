@@ -1,0 +1,5 @@
+#!/bin/bash
+
+bgzip -d -c $1 | vcf_remove_chr | bgzip -c > ${1%.vcf.gz}.chr.vcf.gz
+tabix ${1%.vcf.gz}.chr.vcf.gz
+

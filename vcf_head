@@ -1,0 +1,5 @@
+#!/bin/bash
+
+zgrep -v "^##" $1 | head -1
+zgrep -v "^#" $1 | head -10
+
