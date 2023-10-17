@@ -15,7 +15,7 @@ def main():
     args = parse_args()
     status = trim_info(args.input, args.output, args.pattern)
     print(
-        f"{status.header_lines} header lines, {status.content_lines} content lines, {status.updated_lines} updated content lines"
+        f"{status['header_lines']} header lines, {status['content_lines']} content lines, {status['updated_lines']} updated content lines"
     )
     print(f"Written file to {args.output}")
 
@@ -42,9 +42,9 @@ def trim_info(in_fp: str, out_fp: str, pattern: str) -> ParseStats:
 
             print(updated_line, file=out_fh)
     return {
-        header_lines: header_lines,
-        content_lines: content_lines,
-        updated_lines: updated_lines,
+        "header_lines": header_lines,
+        "content_lines": content_lines,
+        "updated_lines": updated_lines,
     }
 
 

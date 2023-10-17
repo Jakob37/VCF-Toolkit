@@ -1,42 +1,38 @@
 #!/usr/bin/env python
 
 import argparse
-from pysam import VariantFile, VariantHeader, tabix_index
+from pysam import tabix_index
+import gzip
+import subprocess
+import re
 
 
 def main():
     args = parse_arguments()
-    add_prefix(args.input, args.output, args.pattern)
-    tabix_index(args.output, present="vcf", force=True)
+
+    out_fp_w_gz = args.output
+    if out_fp_w_gz.split(".")[-1] != "gz":
+        raise ValueError(f"Out file is expected to end with .gz, found: {out_fp_w_gz}")
+
+    out_fp_wo_gz = ".".join(out_fp_w_gz.split(".")[0:-1])
+
+    add_prefix(args.input, out_fp_wo_gz, args.prefix)
+    subprocess.run(["bgzip", out_fp_wo_gz])
+    tabix_index(out_fp_w_gz, preset="vcf", force=True)
 
 
 def add_prefix(in_fp, out_fp, prefix):
-    new_header = VariantHeader()
-    vcf_in = VariantFile(in_fp)
-
-    # Inspired by: https://github.com/pysam-developers/pysam/issues/1170
-    for header_rec in vcf_in.header.records:
-        if header_rec.type == "CONTIG":
-            existing_id = header_rec["ID"]
-            new_header.contigs.add(
-                f"{prefix}{existing_id}", length=header_rec["length"]
-            )
-        else:
-            new_header.add_record(header_rec)
-
-    for sample in vcf_in.header.samples:
-        new_header.add_sample(sample)
-
-    vcf_out = VariantFile(out_fp, "w", header=new_header)
-
-    for rec in vcf_in.fetch():
-        new_rec = vcf_out.new_record()
-        new_rec.contig = f"{prefix}{rec.chrom}"
-        new_rec.alleles = rec.alleles
-        vcf_out.write(new_rec)
-
-    vcf_in.close()
-    vcf_out.close()
+    with gzip.open(in_fp, "rt") as in_fh, open(out_fp, "w") as out_fh:
+        for line in in_fh:
+            line = line.rstrip()
+            if line.startswith("##contig"):
+                contig_line = re.sub("ID=", f"ID={prefix}", line)
+                print(contig_line, file=out_fh)
+            elif line.startswith("#"):
+                print(line, file=out_fh)
+            else:
+                rec_line = re.sub("^", f"{prefix}", line)
+                print(rec_line, file=out_fh)
 
 
 def parse_arguments():
