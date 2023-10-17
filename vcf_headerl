@@ -1,4 +1,4 @@
 #!/bin/bash
 
-zgrep "^##" $1 | less
+zgrep "^#" $1 | less
 
