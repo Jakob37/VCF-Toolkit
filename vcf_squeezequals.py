@@ -2,6 +2,8 @@
 
 from pysam import VariantFile, tabix_index
 import argparse
+import gzip
+import subprocess
 
 
 def main():
@@ -33,7 +35,7 @@ def update_qualities(in_fp: str, out_fp: str, qual_max: int):
 
     vcf_out = VariantFile(out_fp, "w", header=vcf.header)
     # Update qualities
-    vcf = VariantFile(out_fp)
+    vcf = VariantFile(in_fp)
     for rec in vcf:
         if rec.qual is not None:
             rec.qual = rec.qual / max_qual_in_data * qual_max
