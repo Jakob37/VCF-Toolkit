@@ -2,8 +2,6 @@
 
 from pysam import VariantFile, tabix_index
 import argparse
-import gzip
-import subprocess
 
 
 def main():
