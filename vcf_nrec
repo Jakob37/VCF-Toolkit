@@ -1,3 +1,8 @@
 #!/bin/bash
 
+if [[ $# -ne 1 ]]; then
+    echo "vcf_nrec <vcf>"
+    exit 1
+fi
+
 zgrep -v "^#" $1 | wc -l
