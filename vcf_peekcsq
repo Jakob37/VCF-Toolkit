@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [[ $# -ne 1 ]]; then
+    echo "Usage: vcf_peekcsq <vcf>"
+fi
+
+labels=( $( zgrep "^##" $1 | grep "ID=CSQ" | sed "s/.*Format: //" | sed "s/\">//" | tr "|" "\n" ) )
+values=( $( zgrep -v "^#" $1 | head -1 | cut -f8 | tr ";" "\n" | grep "^CSQ" | sed "s/CSQ=//" | tr "|" "\n") )
+
+IFS=$'\n'
+for ((i=0; i < "${#labels[@]}"; i++)); do
+    printf "%s\t%s\n" "${labels[$i]}" "${values[$i]}"
+done | column -s$'\t' -t
+
+
+
+
+
+
