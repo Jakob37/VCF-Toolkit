@@ -5,7 +5,7 @@ if [[ $# -ne 1 ]]; then
 fi
 
 labels=( $( zgrep "^##" $1 | grep "ID=CSQ" | sed "s/.*Format: //" | sed "s/\">//" | tr "|" "\n" ) )
-values=( $( zgrep -v "^#" $1 | head -1 | cut -f8 | tr ";" "\n" | grep "^CSQ" | sed "s/CSQ=//" | tr "|" "\n" | sed "s/^$/-/" ) )
+values=( $( zgrep -v "^#" $1 | head -1 | cut -f8 | tr ";" "\n" | grep "^CSQ" | sed "s/CSQ=//" | cut -f1 -d"," | tr "|" "\n" | sed "s/^$/-/" ) )
 
 echo "Number CSQ labels: ${#labels[@]} Number values: ${#values[@]}"
 
