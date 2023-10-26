@@ -7,7 +7,7 @@ fi
 labels=( $( zgrep "^##" $1 | grep "ID=CSQ" | sed "s/.*Format: //" | sed "s/\">//" | tr "|" "\n" ) )
 values=( $( zgrep -v "^#" $1 | head -1 | cut -f8 | tr ";" "\n" | grep "^CSQ" | sed "s/CSQ=//" | tr "|" "\n" | sed "s/^$/-/" ) )
 
-echo "Number CSQ entries: ${#labels[@]}"
+echo "Number CSQ labels: ${#labels[@]} Number values: ${#values[@]}"
 
 IFS=$'\n'
 for ((i=0; i < "${#labels[@]}"; i++)); do
