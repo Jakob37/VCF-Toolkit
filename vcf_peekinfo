@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [[ $# -ne 1 ]]; then
+    echo "Usage: vcf_peekinfo <vcf>"
+fi
+
+grep -v "#" $1 | head -1 | cut -f8 | tr ";" "\n" | grep -v CSQ
