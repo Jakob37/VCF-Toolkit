@@ -13,6 +13,10 @@ fi
 labels=( $( zgrep "^##" $1 | grep "ID=CSQ" | sed "s/.*Format: //" | sed "s/\">//" | tr "|" "\n" ) )
 
 target_record=$(zgrep -v "^#" $1 | grep -P "${filter_pattern}" | head -1)
+
+csq_entries=$(echo ${target_record} | cut -f8 | tr ";" "\n" | grep "^CSQ" | sed "s/CSQ=//")
+csq_recs_arr=( $(echo ${csq_entries} | tr "," "\n") )
+
 values=( $( echo ${target_record} | cut -f8 | tr ";" "\n" | grep "^CSQ" | sed "s/CSQ=//" | cut -f1 -d"," | tr "|" "\n" | sed "s/^$/-/" ) )
 
 chr=$(echo ${target_record} | cut -f1 -d" ")
@@ -20,11 +24,21 @@ pos=$(echo ${target_record} | cut -f2 -d" ")
 ref=$(echo ${target_record} | cut -f3 -d" ")
 var=$(echo ${target_record} | cut -f4 -d" ")
 echo "${chr} ${pos} ${ref} ${var}"
-echo "Number CSQ labels: ${#labels[@]} Number values: ${#values[@]}"
+echo "Number CSQ labels: ${#labels[@]} values: ${#values[@]} CSQ recs ${#csq_recs_arr[@]}"
 
 IFS=$'\n'
+#for ((i=0; i < "${#csq_recs_arr[@]}"; i++)); do
+#    echo "Printing for rec ${i}"
+#done
+
 for ((i=0; i < "${#labels[@]}"; i++)); do
-    printf "%s\t%s\n" "${labels[$i]}" "${values[$i]}"
+    printf "%s\t" "${labels[$i]}"
+    for ((j=0; j < "${#csq_recs_arr[@]}"; j++)); do
+        csq_rec=${csq_recs_arr[$j]}
+        csq_rec_values=( $( echo ${csq_rec} | tr "|" "\n" | sed "s/^$/-/" ) )
+        printf "%s\t" "${csq_rec_values[$i]}"
+    done
+    printf "\n"
 done | column -s$'\t' -t
 
 
