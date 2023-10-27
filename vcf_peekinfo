@@ -12,8 +12,8 @@ fi
 target_line=$(zgrep -v "#" $1 | grep -P "${filter_pattern}" | head -1)
 chr=$(echo ${target_line} | cut -f1 -d" ")
 pos=$(echo ${target_line} | cut -f2 -d" ")
-ref=$(echo ${target_line} | cut -f3 -d" ")
-var=$(echo ${target_line} | cut -f4 -d" ")
+ref=$(echo ${target_line} | cut -f4 -d" ")
+var=$(echo ${target_line} | cut -f5 -d" ")
 echo "${chr} ${pos} ${ref} ${var}"
 nbr=$(echo ${target_line} | cut -f8 -d" " | tr ";" "\n" | grep -v CSQ | wc -l)
 echo "INFO fields (excluding CSQ): ${nbr}"

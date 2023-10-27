@@ -21,8 +21,8 @@ values=( $( echo ${target_record} | cut -f8 | tr ";" "\n" | grep "^CSQ" | sed "s
 
 chr=$(echo ${target_record} | cut -f1 -d" ")
 pos=$(echo ${target_record} | cut -f2 -d" ")
-ref=$(echo ${target_record} | cut -f3 -d" ")
-var=$(echo ${target_record} | cut -f4 -d" ")
+ref=$(echo ${target_record} | cut -f4 -d" ")
+var=$(echo ${target_record} | cut -f5 -d" ")
 echo "${chr} ${pos} ${ref} ${var}"
 echo "Number CSQ labels: ${#labels[@]} values: ${#values[@]} CSQ recs ${#csq_recs_arr[@]}"
 
