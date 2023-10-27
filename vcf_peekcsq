@@ -1,12 +1,25 @@
 #!/bin/bash
 
-if [[ $# -ne 1 ]]; then
-    echo "Usage: vcf_peekcsq <vcf>"
+if [[ $# -ne 1 && $# -ne 2 ]]; then
+    echo "Usage: vcf_peekcsq <vcf> [<filter>]"
 fi
 
-labels=( $( zgrep "^##" $1 | grep "ID=CSQ" | sed "s/.*Format: //" | sed "s/\">//" | tr "|" "\n" ) )
-values=( $( zgrep -v "^#" $1 | head -1 | cut -f8 | tr ";" "\n" | grep "^CSQ" | sed "s/CSQ=//" | cut -f1 -d"," | tr "|" "\n" | sed "s/^$/-/" ) )
+filter_pattern=""
+if [[ $# -eq 2 ]]; then
+    filter_pattern=$2
+fi
 
+
+labels=( $( zgrep "^##" $1 | grep "ID=CSQ" | sed "s/.*Format: //" | sed "s/\">//" | tr "|" "\n" ) )
+
+target_record=$(zgrep -v "^#" $1 | grep -P "${filter_pattern}" | head -1)
+values=( $( echo ${target_record} | cut -f8 | tr ";" "\n" | grep "^CSQ" | sed "s/CSQ=//" | cut -f1 -d"," | tr "|" "\n" | sed "s/^$/-/" ) )
+
+chr=$(echo ${target_record} | cut -f1 -d" ")
+pos=$(echo ${target_record} | cut -f2 -d" ")
+ref=$(echo ${target_record} | cut -f3 -d" ")
+var=$(echo ${target_record} | cut -f4 -d" ")
+echo "${chr} ${pos} ${ref} ${var}"
 echo "Number CSQ labels: ${#labels[@]} Number values: ${#values[@]}"
 
 IFS=$'\n'
