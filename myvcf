@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+
+
+def main():
+    args = parse_arguments()
+
+    if args.subcommand == "nrec":
+        subprocess.run(["vcf_nrec", args.vcf])
+    elif args.subcommand == "rec":
+        subprocess.run(["vcf_rec", args.vcf])
+    else:
+        raise ValueError("No known subcommand")
+
+
+def parse_arguments():
+    parent_parser = argparse.ArgumentParser()
+
+    subparsers = parent_parser.add_subparsers(dest="subcommand", required=True)
+
+    add_nrec(subparsers)
+    add_rec(subparsers)
+
+    args = parent_parser.parse_args()
+    return args
+
+
+def add_nrec(subparsers):
+    parser = subparsers.add_parser("nrec")
+    parser.add_argument("vcf")
+
+
+def add_rec(subparsers):
+    parser = subparsers.add_parser("rec")
+    parser.add_argument("vcf")
+
+
+if __name__ == "__main__":
+    main()
