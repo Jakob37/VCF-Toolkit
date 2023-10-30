@@ -1,5 +1,13 @@
 #!/bin/bash
 
-zgrep -v "^##" $1 | head -1
-zgrep -v "^#" $1 | head -10
+if [[ $# -ne 1 && $# -ne 2 ]]; then
+    echo "Usage: vcf_head <vcf> [n]"
+fi
 
+if [[ $# -eq 1 ]]; then
+    zgrep -v "^#" $1 | head -5
+fi
+
+if [[ $# -eq 2 ]]; then
+    zgrep -v "^#" $1 | head -$2
+fi
