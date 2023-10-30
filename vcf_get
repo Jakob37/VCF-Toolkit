@@ -1,14 +1,24 @@
 #!/bin/bash
 
 if [[ $# -ne 2 && $# -ne 3 && $# -ne 4 ]]; then
-    echo "Usage: vcf_get <vcf> chr pos [end-pos] OR vcf_get <vcf> chr:pos"
-    return 1
+    echo "Usage: vcf_get <vcf> chr pos [end-pos] OR vcf_get <vcf> chr:startpos-endpos"
+    exit 1
+fi
+
+if [[ $1 != *.vcf && $1 != *.vcf.gz ]]; then
+    echo "The input file is expected to have .vcf or .vcf.gz suffix"
+    exit 1
+fi
+
+if [[ ! -f "${1}.tbi" && ! -f "${1}.csi" ]]; then
+    echo "No index found, attempting to generate index..."
+    tabix $1
 fi
 
 if [[ $# -eq 2 ]]; then
     chr=${2%:*}
     pos=${2#*:}
-    tabix $1 ${chr}:${pos}-${pos}
+    tabix $1 ${chr}:${pos}
 fi
 
 if [[ $# -eq 3 ]]; then

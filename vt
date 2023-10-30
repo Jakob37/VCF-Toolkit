@@ -17,6 +17,8 @@ def main():
         subprocess.run(["vcf_head", args.vcf, args.n])
     elif args.subcommand == "header":
         subprocess.run(["vcf_header", args.vcf])
+    elif args.subcommand == "sum":
+        subprocess.run(["vcf_sum", args.vcf])
     elif args.subcommand == "info":
         run_args = ["vcf_info", args.vcf]
         if args.filter is not None:
@@ -27,6 +29,23 @@ def main():
         if args.filter is not None:
             run_args.append(args.filter)
         subprocess.run(run_args)
+    elif args.subcommand == "get":
+        vcf = args.vcf
+        if args.pattern is not None:
+            pattern = args.pattern
+        elif args.chr is not None:
+            if args.range is not None:
+                pattern = f"{args.chr}:{args.range}"
+            elif args.pos is not None:
+                pattern = f"{args.chr}:{args.pos}-{args.pos}"
+            else:
+                raise ValueError(
+                    "Must specify either --range or --pos if --pattern is not used"
+                )
+        else:
+            raise ValueError("Must specify --chr if --pattern is not used")
+        print("Pattern", pattern)
+        subprocess.run(["vcf_get", vcf, pattern])
     else:
         raise ValueError("No known subcommand")
 
@@ -43,6 +62,8 @@ def parse_arguments():
     add_vcf_header(subparsers)
     add_vcf_info(subparsers)
     add_vcf_csq(subparsers)
+    add_vcf_sum(subparsers)
+    add_vcf_get(subparsers)
 
     args = parent_parser.parse_args()
     return args
@@ -84,6 +105,20 @@ def add_vcf_csq(subparsers):
     parser = subparsers.add_parser("csq")
     parser.add_argument("vcf")
     parser.add_argument("--filter", default=None)
+
+
+def add_vcf_sum(subparsers):
+    parser = subparsers.add_parser("sum")
+    parser.add_argument("vcf")
+
+
+def add_vcf_get(subparsers):
+    parser = subparsers.add_parser("get")
+    parser.add_argument("vcf")
+    parser.add_argument("--chr", default=None)
+    parser.add_argument("--range", help="Format: start-end", default=None)
+    parser.add_argument("--pos", help="For a single position", default=None)
+    parser.add_argument("--pattern", help="Format: chr:start-end", default=None)
 
 
 if __name__ == "__main__":

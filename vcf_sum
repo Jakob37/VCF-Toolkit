@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [[ $# -ne 1 ]]; then
+    echo "Usage: vcf_sum <vcf>"
+fi
+
 nbr_comments=$(zgrep "^##" $1 | wc -l)
 echo " ${nbr_comments} ## rows"
 zgrep -v "^##" $1 | grep -m 1 "^#"
