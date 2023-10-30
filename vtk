@@ -19,6 +19,20 @@ def main():
         subprocess.run(["vcf_header", args.vcf])
     elif args.subcommand == "sum":
         subprocess.run(["vcf_sum", args.vcf])
+    elif args.subcommand == "qualhist":
+        subprocess.run(["vcf_qualhist.py", "--input", args.vcf, "--output", args.out])
+    elif args.subcommand == "prefix":
+        subprocess.run(
+            [
+                "vcf_prefixcontigs.py",
+                "--input",
+                args.vcf,
+                "--prefix",
+                args.prefix,
+                "--output",
+                args.out,
+            ]
+        )
     elif args.subcommand == "info":
         run_args = ["vcf_info", args.vcf]
         if args.filter is not None:
@@ -57,13 +71,15 @@ def parse_arguments():
 
     add_nrec(subparsers)
     add_rec(subparsers)
-    add_vcf_peek(subparsers)
-    add_vcf_head(subparsers)
-    add_vcf_header(subparsers)
-    add_vcf_info(subparsers)
-    add_vcf_csq(subparsers)
-    add_vcf_sum(subparsers)
-    add_vcf_get(subparsers)
+    add_peek(subparsers)
+    add_head(subparsers)
+    add_header(subparsers)
+    add_info(subparsers)
+    add_csq(subparsers)
+    add_sum(subparsers)
+    add_get(subparsers)
+    add_qualhist(subparsers)
+    add_prefix(subparsers)
 
     args = parent_parser.parse_args()
     return args
@@ -79,46 +95,59 @@ def add_rec(subparsers):
     parser.add_argument("vcf")
 
 
-def add_vcf_peek(subparsers):
+def add_peek(subparsers):
     parser = subparsers.add_parser("peek")
     parser.add_argument("vcf")
 
 
-def add_vcf_head(subparsers):
+def add_head(subparsers):
     parser = subparsers.add_parser("head")
     parser.add_argument("vcf")
     parser.add_argument("-n", default="5")
 
 
-def add_vcf_header(subparsers):
+def add_header(subparsers):
     parser = subparsers.add_parser("header")
     parser.add_argument("vcf")
 
 
-def add_vcf_info(subparsers):
+def add_info(subparsers):
     parser = subparsers.add_parser("info")
     parser.add_argument("vcf")
     parser.add_argument("--filter", default=None)
 
 
-def add_vcf_csq(subparsers):
+def add_csq(subparsers):
     parser = subparsers.add_parser("csq")
     parser.add_argument("vcf")
     parser.add_argument("--filter", default=None)
 
 
-def add_vcf_sum(subparsers):
+def add_sum(subparsers):
     parser = subparsers.add_parser("sum")
     parser.add_argument("vcf")
 
 
-def add_vcf_get(subparsers):
+def add_qualhist(subparsers):
+    parser = subparsers.add_parser("qualhist")
+    parser.add_argument("vcf")
+    parser.add_argument("out")
+
+
+def add_get(subparsers):
     parser = subparsers.add_parser("get")
     parser.add_argument("vcf")
     parser.add_argument("--chr", default=None)
     parser.add_argument("--range", help="Format: start-end", default=None)
     parser.add_argument("--pos", help="For a single position", default=None)
     parser.add_argument("--pattern", help="Format: chr:start-end", default=None)
+
+
+def add_prefix(subparsers):
+    parser = subparsers.add_parser("prefix")
+    parser.add_argument("vcf")
+    parser.add_argument("prefix")
+    parser.add_argument("out")
 
 
 if __name__ == "__main__":
