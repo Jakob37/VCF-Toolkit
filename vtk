@@ -2,29 +2,35 @@
 
 import argparse
 import subprocess
+import os
 
 
 def main():
     args = parse_arguments()
 
+    dirname = os.path.dirname(os.path.abspath(__file__))
+
+    def fp(target_file):
+        return os.path.join(dirname, target_file)
+
     if args.subcommand == "nrec":
-        subprocess.run(["vcf_nrec", args.vcf])
+        subprocess.run([fp("vcf_nrec"), args.vcf])
     elif args.subcommand == "rec":
-        subprocess.run(["vcf_rec", args.vcf])
+        subprocess.run([fp("vcf_rec"), args.vcf])
     elif args.subcommand == "peek":
-        subprocess.run(["vcf_peek", args.vcf])
+        subprocess.run([fp("vcf_peek"), args.vcf])
     elif args.subcommand == "head":
-        subprocess.run(["vcf_head", args.vcf, args.n])
+        subprocess.run([fp("vcf_head"), args.vcf, args.n])
     elif args.subcommand == "header":
-        subprocess.run(["vcf_header", args.vcf])
+        subprocess.run([fp("vcf_header"), args.vcf])
     elif args.subcommand == "sum":
-        subprocess.run(["vcf_sum", args.vcf])
+        subprocess.run([fp("vcf_sum"), args.vcf])
     elif args.subcommand == "qualhist":
-        subprocess.run(["vcf_qualhist.py", "--input", args.vcf, "--output", args.out])
+        subprocess.run([fp("vcf_qualhist.py"), "--input", args.vcf, "--output", args.out])
     elif args.subcommand == "prefix":
         subprocess.run(
             [
-                "vcf_prefixcontigs.py",
+                fp("vcf_prefixcontigs.py"),
                 "--input",
                 args.vcf,
                 "--prefix",
@@ -34,12 +40,12 @@ def main():
             ]
         )
     elif args.subcommand == "info":
-        run_args = ["vcf_info", args.vcf]
+        run_args = [fp("vcf_info"), args.vcf]
         if args.filter is not None:
             run_args.append(args.filter)
         subprocess.run(run_args)
     elif args.subcommand == "csq":
-        run_args = ["vcf_info", args.vcf]
+        run_args = [fp("vcf_info"), args.vcf]
         if args.filter is not None:
             run_args.append(args.filter)
         subprocess.run(run_args)
@@ -59,7 +65,7 @@ def main():
         else:
             raise ValueError("Must specify --chr if --pattern is not used")
         print("Pattern", pattern)
-        subprocess.run(["vcf_get", vcf, pattern])
+        subprocess.run([fp("vcf_get"), vcf, pattern])
     else:
         raise ValueError("No known subcommand")
 
