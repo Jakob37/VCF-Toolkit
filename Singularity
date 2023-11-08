@@ -7,12 +7,8 @@ From: python:3.10
     git clone https://github.com/Jakob37/My-VCF-tools
     python -m venv .venv
     . .venv/bin/activate
-    ls
-    pwd
-    python --version
     python -m pip install -r My-VCF-tools/requirements.txt
 
 %environment
     export LC_ALL=C
-    export PATH="${PATH}:/My-VCF-tools/vtk"
 
