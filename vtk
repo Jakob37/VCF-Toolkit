@@ -26,7 +26,9 @@ def main():
     elif args.subcommand == "sum":
         subprocess.run([fp("vcf_sum"), args.vcf])
     elif args.subcommand == "qualhist":
-        subprocess.run([fp("vcf_qualhist.py"), "--input", args.vcf, "--output", args.out])
+        subprocess.run(
+            [fp("vcf_qualhist.py"), "--input", args.vcf, "--output", args.out]
+        )
     elif args.subcommand == "prefix":
         subprocess.run(
             [
@@ -45,7 +47,7 @@ def main():
             run_args.append(args.filter)
         subprocess.run(run_args)
     elif args.subcommand == "csq":
-        run_args = [fp("vcf_info"), args.vcf]
+        run_args = [fp("vcf_csq"), args.vcf]
         if args.filter is not None:
             run_args.append(args.filter)
         subprocess.run(run_args)

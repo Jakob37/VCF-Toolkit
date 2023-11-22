@@ -10,6 +10,13 @@ I.e.:
 vtk peek my.vcf.gz
 ```
 
+How to build container:
+
+```
+sudo singularity build containers/build4.sif Singularity 
+singularity exec containers/build.sif /My-VCF-tools/vtk nrec data/testout_noplugins.vcf.gz
+```
+
 Wishlist:
 
-* Histogram of 
+* Histogram
