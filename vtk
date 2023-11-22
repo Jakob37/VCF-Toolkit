@@ -3,6 +3,7 @@
 import argparse
 import subprocess
 import os
+from glob import glob
 
 
 def main():
@@ -13,61 +14,89 @@ def main():
     def fp(target_file):
         return os.path.join(dirname, target_file)
 
+    vcfs = list()
+    for vcf_arg in args.vcf:
+        vcfs += glob(vcf_arg)
+
     if args.subcommand == "nrec":
-        subprocess.run([fp("vcf_nrec"), args.vcf])
+        for vcf in vcfs:
+            print(vcf)
+            subprocess.run([fp("vcf_nrec"), vcf])
     elif args.subcommand == "rec":
-        subprocess.run([fp("vcf_rec"), args.vcf])
+        for vcf in vcfs:
+            print(vcf)
+            subprocess.run([fp("vcf_rec"), vcf])
     elif args.subcommand == "peek":
-        subprocess.run([fp("vcf_peek"), args.vcf])
+        for vcf in vcfs:
+            print(vcf)
+            subprocess.run([fp("vcf_peek"), vcf])
     elif args.subcommand == "head":
-        subprocess.run([fp("vcf_head"), args.vcf, args.n])
+        for vcf in vcfs:
+            print(vcf)
+            subprocess.run([fp("vcf_head"), vcf, args.n])
     elif args.subcommand == "header":
-        subprocess.run([fp("vcf_header"), args.vcf])
+        for vcf in vcfs:
+            print(vcf)
+            subprocess.run([fp("vcf_header"), vcf])
     elif args.subcommand == "sum":
-        subprocess.run([fp("vcf_sum"), args.vcf])
+        for vcf in vcfs:
+            print(vcf)
+            subprocess.run([fp("vcf_sum"), vcf])
     elif args.subcommand == "qualhist":
+        assert len(vcfs) == 2
+        file_name = vcfs[0]
+        png_out = vcfs[1]
         subprocess.run(
-            [fp("vcf_qualhist.py"), "--input", args.vcf, "--output", args.out]
+            [fp("vcf_qualhist.py"), "--input", file_name, "--output", png_out]
         )
     elif args.subcommand == "prefix":
+        assert len(vcfs) == 3
+        vcf = vcfs[0]
+        prefix = vcfs[1]
+        out = vcfs[2]
         subprocess.run(
             [
                 fp("vcf_prefixcontigs.py"),
                 "--input",
-                args.vcf,
+                vcf,
                 "--prefix",
-                args.prefix,
+                prefix,
                 "--output",
-                args.out,
+                out,
             ]
         )
     elif args.subcommand == "info":
-        run_args = [fp("vcf_info"), args.vcf]
-        if args.filter is not None:
-            run_args.append(args.filter)
-        subprocess.run(run_args)
+        for vcf in vcfs:
+            print(vcf)
+            run_args = [fp("vcf_info"), vcf]
+            if args.filter is not None:
+                run_args.append(args.filter)
+            subprocess.run(run_args)
     elif args.subcommand == "csq":
-        run_args = [fp("vcf_csq"), args.vcf]
-        if args.filter is not None:
-            run_args.append(args.filter)
-        subprocess.run(run_args)
+        for vcf in vcfs:
+            print(vcf)
+            run_args = [fp("vcf_csq"), vcf]
+            if args.filter is not None:
+                run_args.append(args.filter)
+            subprocess.run(run_args)
     elif args.subcommand == "get":
-        vcf = args.vcf
-        if args.pattern is not None:
-            pattern = args.pattern
-        elif args.chr is not None:
-            if args.range is not None:
-                pattern = f"{args.chr}:{args.range}"
-            elif args.pos is not None:
-                pattern = f"{args.chr}:{args.pos}-{args.pos}"
+        for vcf in vcfs:
+            print(vcf)
+            if args.pattern is not None:
+                pattern = args.pattern
+            elif args.chr is not None:
+                if args.range is not None:
+                    pattern = f"{args.chr}:{args.range}"
+                elif args.pos is not None:
+                    pattern = f"{args.chr}:{args.pos}-{args.pos}"
+                else:
+                    raise ValueError(
+                        "Must specify either --range or --pos if --pattern is not used"
+                    )
             else:
-                raise ValueError(
-                    "Must specify either --range or --pos if --pattern is not used"
-                )
-        else:
-            raise ValueError("Must specify --chr if --pattern is not used")
-        print("Pattern", pattern)
-        subprocess.run([fp("vcf_get"), vcf, pattern])
+                raise ValueError("Must specify --chr if --pattern is not used")
+            print("Pattern", pattern)
+            subprocess.run([fp("vcf_get"), vcf, pattern])
     else:
         raise ValueError("No known subcommand")
 
@@ -95,45 +124,45 @@ def parse_arguments():
 
 def add_nrec(subparsers):
     parser = subparsers.add_parser("nrec")
-    parser.add_argument("vcf")
+    parser.add_argument("vcf", nargs="*")
 
 
 def add_rec(subparsers):
     parser = subparsers.add_parser("rec")
-    parser.add_argument("vcf")
+    parser.add_argument("vcf", nargs="*")
 
 
 def add_peek(subparsers):
     parser = subparsers.add_parser("peek")
-    parser.add_argument("vcf")
+    parser.add_argument("vcf", nargs="*")
 
 
 def add_head(subparsers):
     parser = subparsers.add_parser("head")
-    parser.add_argument("vcf")
+    parser.add_argument("vcf", nargs="*")
     parser.add_argument("-n", default="5")
 
 
 def add_header(subparsers):
     parser = subparsers.add_parser("header")
-    parser.add_argument("vcf")
+    parser.add_argument("vcf", nargs="*")
 
 
 def add_info(subparsers):
     parser = subparsers.add_parser("info")
-    parser.add_argument("vcf")
+    parser.add_argument("vcf", nargs="*")
     parser.add_argument("--filter", default=None)
 
 
 def add_csq(subparsers):
     parser = subparsers.add_parser("csq")
-    parser.add_argument("vcf")
+    parser.add_argument("vcf", nargs="*")
     parser.add_argument("--filter", default=None)
 
 
 def add_sum(subparsers):
     parser = subparsers.add_parser("sum")
-    parser.add_argument("vcf")
+    parser.add_argument("vcf", nargs="*")
 
 
 def add_qualhist(subparsers):
@@ -144,7 +173,7 @@ def add_qualhist(subparsers):
 
 def add_get(subparsers):
     parser = subparsers.add_parser("get")
-    parser.add_argument("vcf")
+    parser.add_argument("vcf", nargs="*")
     parser.add_argument("--chr", default=None)
     parser.add_argument("--range", help="Format: start-end", default=None)
     parser.add_argument("--pos", help="For a single position", default=None)
