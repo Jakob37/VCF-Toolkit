@@ -17,33 +17,54 @@ def main():
     def fp(target_file):
         return os.path.join(dirname, target_file)
 
+    single_match = False
     vcfs = list()
     for vcf_arg in args.vcf:
-        vcfs += glob(vcf_arg)
+        if os.path.isdir(vcf_arg):
+            for my_file in os.listdir(vcf_arg):
+                if my_file.endswith(".vcf.gz") or my_file.endswith(".vcf"):
+                    dir_wo_suffix = vcf_arg.rstrip("/")
+                    vcfs.append(f"{dir_wo_suffix}/{my_file}")
+        else:
+            for my_file in glob(vcf_arg):
+                if my_file.endswith(".vcf.gz") or my_file.endswith(".vcf"):
+                    vcfs.append(my_file)
+
+        if os.path.isfile(vcf_arg) and len(args.vcf) == 1:
+            single_match = True
 
     if args.subcommand == "nrec":
         for vcf in vcfs:
-            print(vcf)
+            if not single_match:
+                print(vcf)
             subprocess.run([fp("vcf_nrec"), vcf])
     elif args.subcommand == "rec":
         for vcf in vcfs:
-            print(vcf)
+            if not single_match:
+                print(vcf)
             subprocess.run([fp("vcf_rec"), vcf])
     elif args.subcommand == "peek":
         for vcf in vcfs:
-            print(vcf)
+            if not single_match:
+                print(vcf)
             subprocess.run([fp("vcf_peek"), vcf])
     elif args.subcommand == "head":
         for vcf in vcfs:
-            print(vcf)
-            subprocess.run([fp("vcf_head"), vcf, args.n])
+            if not single_match:
+                print(vcf)
+            head_args = [fp("vcf_head"), vcf, args.n]
+            if args.keephead:
+                head_args.append("keephead")
+            subprocess.run(head_args)
     elif args.subcommand == "header":
         for vcf in vcfs:
-            print(vcf)
+            if not single_match:
+                print(vcf)
             subprocess.run([fp("vcf_header"), vcf])
     elif args.subcommand == "sum":
         for vcf in vcfs:
-            print(vcf)
+            if not single_match:
+                print(vcf)
             subprocess.run([fp("vcf_sum"), vcf])
     elif args.subcommand == "qualhist":
         assert len(vcfs) == 2
@@ -70,21 +91,24 @@ def main():
         )
     elif args.subcommand == "info":
         for vcf in vcfs:
-            print(vcf)
+            if not single_match:
+                print(vcf)
             run_args = [fp("vcf_info"), vcf]
             if args.filter is not None:
                 run_args.append(args.filter)
             subprocess.run(run_args)
     elif args.subcommand == "csq":
         for vcf in vcfs:
-            print(vcf)
+            if not single_match:
+                print(vcf)
             run_args = [fp("vcf_csq"), vcf]
             if args.filter is not None:
                 run_args.append(args.filter)
             subprocess.run(run_args)
     elif args.subcommand == "get":
         for vcf in vcfs:
-            print(vcf)
+            if not single_match:
+                print(vcf)
             if args.pattern is not None:
                 pattern = args.pattern
             elif args.chr is not None:
@@ -129,7 +153,7 @@ def parse_arguments():
 
 def add_nrec(subparsers):
     parser = subparsers.add_parser("nrec")
-    parser.add_argument("vcf", nargs="*")
+    parser.add_argument("vcf", nargs="*", default=".")
 
 
 def add_rec(subparsers):
@@ -146,6 +170,7 @@ def add_head(subparsers):
     parser = subparsers.add_parser("head")
     parser.add_argument("vcf", nargs="*")
     parser.add_argument("-n", default="5")
+    parser.add_argument("--keephead", action="store_true")
 
 
 def add_header(subparsers):

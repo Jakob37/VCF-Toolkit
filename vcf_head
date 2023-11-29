@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [[ $# -ne 1 && $# -ne 2 ]]; then
-    echo "Usage: vcf_head <vcf> [n]"
+if [[ $# -ne 1 && $# -ne 2 && $# -ne 3 ]]; then
+    echo "Usage: vcf_head <vcf> [n] [keephead]"
 fi
 
 if [[ $# -eq 1 ]]; then
@@ -9,5 +9,10 @@ if [[ $# -eq 1 ]]; then
 fi
 
 if [[ $# -eq 2 ]]; then
+    zgrep -v "^#" $1 | head -$2
+fi
+
+if [[ $# -eq 3 ]]; then
+    zgrep "^#" $1
     zgrep -v "^#" $1 | head -$2
 fi
