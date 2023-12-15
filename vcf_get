@@ -1,31 +1,68 @@
 #!/bin/bash
 
-if [[ $# -ne 2 && $# -ne 3 && $# -ne 4 ]]; then
-    echo "Usage: vcf_get <vcf> chr pos [end-pos] OR vcf_get <vcf> chr:startpos-endpos"
-    exit 1
+usage() {
+    echo "Usage: vcf_get -f <vcf> -c <chr> [-s <startpos> [-e <endpos>]] [-l <line limit>] [-h]"
+    echo "       vcf_get -f <vcf> -r <chr:startpos-endpos> [-l <line limit>] [-h]"
+}
+
+vcf=""
+chr=""
+startpos=""
+endpos=""
+include_header=false
+line_limit=""
+
+echo "Obtained args $@"
+
+while getopts "f:c:s:e:r:hl:" opt; do
+    case ${opt} in
+        f) vcf="$OPTARG" ;;
+        c) chr="$OPTARG" ;;
+        s) startpos="$OPTARG" ;;
+        e) endpos="$OPTARG" ;;
+        r)
+            chr="${OPTARG%:*}"
+            range="${OPTARG#*:}"
+            startpos="${range%-*}"
+            endpos="${range#*-}"
+            ;;
+        h) include_header=true ;;
+        l) line_limit="$OPTARG" ;;
+        \?) usage ;;
+    esac
+done
+
+echo "line_limit ${line_limit}";
+
+if [[ -z ${vcf} || -z ${chr} ]]; then
+    usage
 fi
 
-if [[ $1 != *.vcf && $1 != *.vcf.gz ]]; then
-    echo "The input file is expected to have .vcf or .vcf.gz suffix"
-    exit 1
+if [[ ${vcf} != *.vcf.gz ]]; then
+    echo "The input file is expected to have .vcf.gz suffix"
 fi
 
-if [[ ! -f "${1}.tbi" && ! -f "${1}.csi" ]]; then
+if [[ ! -f "${vcf}.tbi" && -f "${vcf}.csi" ]]; then
     echo "No index found, attempting to generate index..."
-    tabix $1
+    tabix ${vcf}
 fi
 
-if [[ $# -eq 2 ]]; then
-    chr=${2%:*}
-    pos=${2#*:}
-    tabix $1 ${chr}:${pos}
+if ${include_header}; then
+    zgrep "^#" ${vcf}
 fi
 
-if [[ $# -eq 3 ]]; then
-    tabix $1 "$2:$3-$3"
+echo "Limit '${line_limit}'"
+if [[ -n "${startpos}" ]]; then
+    if [[ -n "${line_limit}" ]]; then
+        tabix ${vcf} "${chr}:${startpos}-${endpos}" | head -n ${line_limit}
+    else
+        tabix ${vcf} "${chr}:${startpos}-${endpos}"
+    fi
+else
+    if [[ -n "${line_limit}" ]]; then
+        tabix ${vcf} ${chr} | head -n ${line_limit}
+    else
+        echo "Chr '${chr}'"
+        tabix ${vcf} "${chr}"
+    fi
 fi
-
-if [[ $# -eq 4 ]]; then
-    tabix $1 "$2:$3-$4"
-fi
-

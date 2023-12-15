@@ -109,21 +109,29 @@ def main():
         for vcf in vcfs:
             if not single_match:
                 print(vcf)
+
             if args.pattern is not None:
-                pattern = args.pattern
+                bash_args = ["-r", args.pattern]
             elif args.chr is not None:
                 if args.range is not None:
-                    pattern = f"{args.chr}:{args.range}"
+                    (start, end) = args.range.split(":")
+                    bash_args = ["-c", args.chr, "-s", start, "-e", end]
                 elif args.pos is not None:
-                    pattern = f"{args.chr}:{args.pos}-{args.pos}"
+                    bash_args = ["-c", args.chr, "-s", args.pos, "-e", args.pos]
                 else:
-                    raise ValueError(
-                        "Must specify either --range or --pos if --pattern is not used"
-                    )
+                    bash_args = ["-c", args.chr]
             else:
                 raise ValueError("Must specify --chr if --pattern is not used")
-            print("Pattern", pattern)
-            subprocess.run([fp("vcf_get"), vcf, pattern])
+
+            if args.limit != -1:
+                bash_args.extend(["-l", f"{args.limit}"])
+
+            if args.header:
+                bash_args.append("-h")
+
+            print(bash_args)
+
+            subprocess.run([fp("vcf_get"), "-f", vcf] + bash_args)
     else:
         raise ValueError("No known subcommand")
 
@@ -202,12 +210,16 @@ def add_qualhist(subparsers):
 
 
 def add_get(subparsers):
-    parser = subparsers.add_parser("get")
+    parser = subparsers.add_parser(
+        "get", description="Retrieve parts of VCF using tabix"
+    )
     parser.add_argument("vcf", nargs="*")
-    parser.add_argument("--chr", default=None)
+    parser.add_argument("--chr", default=None, help="Mandatory")
     parser.add_argument("--range", help="Format: start-end", default=None)
     parser.add_argument("--pos", help="For a single position", default=None)
     parser.add_argument("--pattern", help="Format: chr:start-end", default=None)
+    parser.add_argument("--header", help="Retain header", action="store_true")
+    parser.add_argument("--limit", help="Limit the number of entries", default=-1)
 
 
 def add_prefix(subparsers):
