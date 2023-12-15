@@ -12,8 +12,6 @@ endpos=""
 include_header=false
 line_limit=""
 
-echo "Obtained args $@"
-
 while getopts "f:c:s:e:r:hl:" opt; do
     case ${opt} in
         f) vcf="$OPTARG" ;;
@@ -31,8 +29,6 @@ while getopts "f:c:s:e:r:hl:" opt; do
         \?) usage ;;
     esac
 done
-
-echo "line_limit ${line_limit}";
 
 if [[ -z ${vcf} || -z ${chr} ]]; then
     usage
