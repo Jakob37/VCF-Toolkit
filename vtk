@@ -5,6 +5,8 @@ import subprocess
 import os
 from glob import glob
 
+import python_utils
+
 __version_info__ = ("1", "0", "0")
 __version__ = ".".join(__version_info__)
 
@@ -132,6 +134,26 @@ def main():
             print(bash_args)
 
             subprocess.run([fp("vcf_get"), "-f", vcf] + bash_args)
+    elif args.subcommand == "infofilter":
+        for vcf in vcfs:
+            if not single_match:
+                print(vcf)
+
+            # preparser_fn = lambda x: x if args.preparse is None else eval(args.preparse)
+            if args.preparse is not None:
+                preparser_fn = eval(args.preparse)
+            else:
+                preparser_fn = lambda x: x
+
+            python_utils.filter_info(
+                vcf,
+                args.info_field,
+                args.comp_val,
+                args.type,
+                preparser_fn
+                # vcf, args.info_field, args.comp_val, args.type, preparser_fn
+            )
+            # subprocess.run([fp("vcf_header"), vcf])
     else:
         raise ValueError("No known subcommand")
 
@@ -154,6 +176,7 @@ def parse_arguments():
     add_get(subparsers)
     add_qualhist(subparsers)
     add_prefix(subparsers)
+    add_infofilter(subparsers)
 
     args = parent_parser.parse_args()
     return args
@@ -227,6 +250,23 @@ def add_prefix(subparsers):
     parser.add_argument("vcf")
     parser.add_argument("prefix")
     parser.add_argument("out")
+
+
+def add_infofilter(subparsers):
+    parser = subparsers.add_parser("infofilter")
+    parser.add_argument("vcf", nargs="*")
+    parser.add_argument(
+        "--info_field", help="The target info field to filter", required=True
+    )
+    parser.add_argument("--comp_val", help="The value to compare with", required=True)
+    parser.add_argument(
+        "--type", help="Type of info filtering (equal, greater, less)", default="equal"
+    )
+    parser.add_argument(
+        "--preparse",
+        help="Logic to eval preparse. Lambda with one argument expected.",
+        default=None,
+    )
 
 
 if __name__ == "__main__":
