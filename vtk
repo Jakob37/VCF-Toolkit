@@ -21,19 +21,20 @@ def main():
 
     single_match = False
     vcfs = list()
-    for vcf_arg in args.vcf:
-        if os.path.isdir(vcf_arg):
-            for my_file in os.listdir(vcf_arg):
-                if my_file.endswith(".vcf.gz") or my_file.endswith(".vcf"):
-                    dir_wo_suffix = vcf_arg.rstrip("/")
-                    vcfs.append(f"{dir_wo_suffix}/{my_file}")
-        else:
-            for my_file in glob(vcf_arg):
-                if my_file.endswith(".vcf.gz") or my_file.endswith(".vcf"):
-                    vcfs.append(my_file)
+    if args.vcf is not None:
+        for vcf_arg in args.vcf:
+            if os.path.isdir(vcf_arg):
+                for my_file in os.listdir(vcf_arg):
+                    if my_file.endswith(".vcf.gz") or my_file.endswith(".vcf"):
+                        dir_wo_suffix = vcf_arg.rstrip("/")
+                        vcfs.append(f"{dir_wo_suffix}/{my_file}")
+            else:
+                for my_file in glob(vcf_arg):
+                    if my_file.endswith(".vcf.gz") or my_file.endswith(".vcf"):
+                        vcfs.append(my_file)
 
-        if os.path.isfile(vcf_arg) and len(args.vcf) == 1:
-            single_match = True
+            if os.path.isfile(vcf_arg) and len(args.vcf) == 1:
+                single_match = True
 
     if args.subcommand == "nrec":
         for vcf in vcfs:
@@ -139,21 +140,16 @@ def main():
             if not single_match:
                 print(vcf)
 
-            # preparser_fn = lambda x: x if args.preparse is None else eval(args.preparse)
             if args.preparse is not None:
                 preparser_fn = eval(args.preparse)
             else:
                 preparser_fn = lambda x: x
 
             python_utils.filter_info(
-                vcf,
-                args.info_field,
-                args.comp_val,
-                args.type,
-                preparser_fn
-                # vcf, args.info_field, args.comp_val, args.type, preparser_fn
+                vcf, args.info_field, args.comp_val, args.type, preparser_fn
             )
-            # subprocess.run([fp("vcf_header"), vcf])
+    elif args.subcommand == "snvdiff":
+        python_utils.snv_diff(args.vcf1, args.vcf2, args.print_recs)
     else:
         raise ValueError("No known subcommand")
 
@@ -177,6 +173,7 @@ def parse_arguments():
     add_qualhist(subparsers)
     add_prefix(subparsers)
     add_infofilter(subparsers)
+    add_snvdiff(subparsers)
 
     args = parent_parser.parse_args()
     return args
@@ -270,6 +267,16 @@ def add_infofilter(subparsers):
         help="Logic to eval preparse. Lambda with one argument expected.",
         default=None,
     )
+
+
+def add_snvdiff(subparsers):
+    parser = subparsers.add_parser("snvdiff", description="Diff what SNVs are present")
+    parser.add_argument("vcf1")
+    parser.add_argument("vcf2")
+    parser.add_argument(
+        "--vcf", help="FIXME: Placeholder as all other commands expects VCFs"
+    )
+    parser.add_argument("--print_recs", action="store_true")
 
 
 if __name__ == "__main__":
