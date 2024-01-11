@@ -253,7 +253,10 @@ def add_prefix(subparsers):
 
 
 def add_infofilter(subparsers):
-    parser = subparsers.add_parser("infofilter")
+    parser = subparsers.add_parser(
+        "infofilter",
+        description="Filter for info field values (example to rank score filter: python3 vtk infofilter my.vcf.gz --info_field RankScore --comp_val 17 --type greater --preparse \"lambda x: x.split(':')[1]\")",
+    )
     parser.add_argument("vcf", nargs="*")
     parser.add_argument(
         "--info_field", help="The target info field to filter", required=True
