@@ -12,3 +12,7 @@ From: python:3.10
 %environment
     export LC_ALL=C
 
+%runscript
+    #!/bin/bash
+    source .venv/bin/activate
+    python My-VCF-tools/vtk

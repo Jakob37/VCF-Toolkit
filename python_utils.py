@@ -2,19 +2,61 @@ from typing import Callable
 from pysam import VariantFile, VariantRecord
 
 
+def print_rankscore(vcf: str, comp_val: int, comp_type: str | None, print_full: bool):
+    assert (
+        comp_type == "equal"
+        or comp_type == "greater"
+        or comp_type == "less"
+        or comp_type is None
+    )
+
+    print(comp_val)
+    print(comp_type)
+
+    fh = VariantFile(vcf)
+    for record in fh:
+        rank_score_field = record.info.get("RankScore")
+        rank_score = float(rank_score_field[0].split(":")[1])
+
+        if comp_type == "equal" and rank_score == comp_val:
+            if print_full:
+                print(record, end="")
+            else:
+                print(rank_score)
+        elif comp_type == "greater" and rank_score > comp_val:
+            if print_full:
+                print(record, end="")
+            else:
+                print(rank_score)
+        elif comp_type == "less" and rank_score < comp_val:
+            if print_full:
+                print(record, end="")
+            else:
+                print(rank_score)
+        elif comp_type is None:
+            if print_full:
+                print(record, end="")
+            else:
+                print(rank_score)
+
+
 def filter_info(
     vcf: str,
     info_field: str,
     comp_val: str,
     type: str,
     preparser_fn: Callable[[str], str],
+    debug: bool,
 ):
     assert type == "equal" or type == "greater" or type == "less"
 
+    first_record = True
     fh = VariantFile(vcf)
     nbr_missing = 0
     for record in fh:
         info_val = record.info.get(info_field)
+        if debug and first_record:
+            print(info_val)
         if info_val is None:
             nbr_missing += 1
         else:
@@ -22,7 +64,8 @@ def filter_info(
 
             if type == "equal":
                 if info_val == comp_val:
-                    print(record, end="")
+                    if not debug:
+                        print(record, end="")
             elif type == "greater" or type == "less":
                 valid_float = True
                 try:
@@ -35,9 +78,16 @@ def filter_info(
                     comp_val_float = float(comp_val)
 
                     if type == "greater" and info_val_float >= comp_val_float:
-                        print(record, end="")
+                        if not debug:
+                            print(record, end="")
                     elif type == "less" and info_val_float <= comp_val_float:
-                        print(record, end="")
+                        if not debug:
+                            print(record, end="")
+        if first_record:
+            first_record = False
+
+    if debug:
+        print(f"Number missing: {nbr_missing}")
 
 
 def snv_diff(vcf1: str, vcf2: str, print_recs: bool):

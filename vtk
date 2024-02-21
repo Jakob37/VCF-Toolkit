@@ -141,12 +141,22 @@ def main():
                 print(vcf)
 
             if args.preparse is not None:
+                if args.debug:
+                    print(f"{args.preparse} will be parsed into a lambda")
                 preparser_fn = eval(args.preparse)
             else:
                 preparser_fn = lambda x: x
 
             python_utils.filter_info(
-                vcf, args.info_field, args.comp_val, args.type, preparser_fn
+                vcf, args.info_field, args.comp_val, args.type, preparser_fn, args.debug
+            )
+    elif args.subcommand == "rankscore":
+        for vcf in vcfs:
+            if not single_match:
+                print(vcf)
+
+            python_utils.print_rankscore(
+                vcf, args.comp_val, args.comp_type, args.print_full
             )
     elif args.subcommand == "snvdiff":
         python_utils.snv_diff(args.vcf1, args.vcf2, args.print_recs)
@@ -174,6 +184,7 @@ def parse_arguments():
     add_prefix(subparsers)
     add_infofilter(subparsers)
     add_snvdiff(subparsers)
+    add_rankscore(subparsers)
 
     args = parent_parser.parse_args()
     return args
@@ -264,8 +275,11 @@ def add_infofilter(subparsers):
     )
     parser.add_argument(
         "--preparse",
-        help="Logic to eval preparse. Lambda with one argument expected.",
+        help="Logic to eval preparse. Lambda with one argument expected. Example: \"lambda x: x.split(':')[1]\"",
         default=None,
+    )
+    parser.add_argument(
+        "--debug", help="Helper to debug the command", action="store_true"
     )
 
 
@@ -277,6 +291,20 @@ def add_snvdiff(subparsers):
         "--vcf", help="FIXME: Placeholder as all other commands expects VCFs"
     )
     parser.add_argument("--print_recs", action="store_true")
+
+
+def add_rankscore(subparsers):
+    parser = subparsers.add_parser(
+        "rankscore", description="Work directly with rank scores"
+    )
+    parser.add_argument("vcf", nargs="*")
+    parser.add_argument("--comp_val", type=int, default=0, help="Optional threshold")
+    parser.add_argument(
+        "--comp_type",
+        default=None,
+        help="Type of filtering ('greater', 'less', 'equal' or None)",
+    )
+    parser.add_argument("--print_full", action="store_true")
 
 
 if __name__ == "__main__":
