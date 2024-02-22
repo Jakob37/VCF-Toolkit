@@ -4,6 +4,7 @@ import argparse
 import subprocess
 import os
 from glob import glob
+import math
 
 import python_utils
 
@@ -156,7 +157,13 @@ def main():
                 print(vcf)
 
             python_utils.print_rankscore(
-                vcf, args.comp_val, args.comp_type, args.print_full
+                vcf,
+                args.comp_val,
+                args.comp_type,
+                args.print_full,
+                args.rank_model,
+                args.columns,
+                args.head,
             )
     elif args.subcommand == "snvdiff":
         python_utils.snv_diff(args.vcf1, args.vcf2, args.print_recs)
@@ -302,9 +309,12 @@ def add_rankscore(subparsers):
     parser.add_argument(
         "--comp_type",
         default=None,
-        help="Type of filtering ('greater', 'less', 'equal' or None)",
+        help="Type of filtering ('greater', 'less', 'equal', 'greaterorequal', 'lessorequal', or None)",
     )
     parser.add_argument("--print_full", action="store_true")
+    parser.add_argument("--columns", default=None, help="Comma separated string")
+    parser.add_argument("--rank_model", default=None)
+    parser.add_argument("--head", default=math.inf, type=int)
 
 
 if __name__ == "__main__":

@@ -1,17 +1,39 @@
 from typing import Callable
 from pysam import VariantFile, VariantRecord
 
+import pdb
 
-def print_rankscore(vcf: str, comp_val: int, comp_type: str | None, print_full: bool):
+from classes.rankmodel import RankModel
+
+
+def print_rankscore(
+    vcf: str,
+    comp_val: int,
+    comp_type: str | None,
+    print_full: bool,
+    rank_model_fp: str | None,
+    columns_str: list[str] | None,
+    head: int,
+):
     assert (
         comp_type == "equal"
         or comp_type == "greater"
         or comp_type == "less"
+        or comp_type == "lessorequal"
+        or comp_type == "greaterorequal"
         or comp_type is None
     )
 
-    print(comp_val)
-    print(comp_type)
+    columns = None
+    if columns_str is not None:
+        columns = [int(col) for col in columns_str.split(",")]
+
+    rank_model = None
+    if rank_model_fp is not None:
+        rank_model = RankModel(rank_model_fp)
+        print(f"Found categories: {rank_model.categories}")
+
+    printed_entries = 0
 
     fh = VariantFile(vcf)
     for record in fh:
@@ -19,25 +41,48 @@ def print_rankscore(vcf: str, comp_val: int, comp_type: str | None, print_full: 
         rank_score = float(rank_score_field[0].split(":")[1])
 
         if comp_type == "equal" and rank_score == comp_val:
-            if print_full:
-                print(record, end="")
-            else:
-                print(rank_score)
+            print_helper(record, rank_score, print_full, columns, rank_model)
+            printed_entries += 1
         elif comp_type == "greater" and rank_score > comp_val:
-            if print_full:
-                print(record, end="")
-            else:
-                print(rank_score)
+            print_helper(record, rank_score, print_full, columns, rank_model)
+            printed_entries += 1
         elif comp_type == "less" and rank_score < comp_val:
-            if print_full:
-                print(record, end="")
-            else:
-                print(rank_score)
+            print_helper(record, rank_score, print_full, columns, rank_model)
+            printed_entries += 1
+        elif comp_type == "lessorequal" and rank_score <= comp_val:
+            print_helper(record, rank_score, print_full, columns, rank_model)
+            printed_entries += 1
+        elif comp_type == "greaterorequal" and rank_score >= comp_val:
+            print_helper(record, rank_score, print_full, columns, rank_model)
+            printed_entries += 1
         elif comp_type is None:
-            if print_full:
-                print(record, end="")
-            else:
-                print(rank_score)
+            print_helper(record, rank_score, print_full, columns, rank_model)
+            printed_entries += 1
+
+        if printed_entries > head:
+            break
+
+
+def print_helper(
+    record,
+    rank_score: int,
+    print_full: bool,
+    columns: list[int] | None,
+    rank_model: RankModel | None,
+):
+
+    # breakpoint()
+    if print_full:
+        print(record, end="")
+    elif columns is not None:
+        # pdb.set_trace()
+        rec_fields = str(record).rstrip().split("\t")
+        subset = [rec_fields[i] for i in columns]
+        subset.append(str(rank_score))
+        # print(subset)
+        print("\t".join(subset))
+    else:
+        print(rank_score)
 
 
 def filter_info(
@@ -48,7 +93,13 @@ def filter_info(
     preparser_fn: Callable[[str], str],
     debug: bool,
 ):
-    assert type == "equal" or type == "greater" or type == "less"
+    assert (
+        type == "equal"
+        or type == "greater"
+        or type == "less"
+        or type == "greaterorequal"
+        or type == "lessorequal"
+    )
 
     first_record = True
     fh = VariantFile(vcf)
