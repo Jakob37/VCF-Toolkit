@@ -31,32 +31,68 @@ def print_rankscore(
     rank_model = None
     if rank_model_fp is not None:
         rank_model = RankModel(rank_model_fp)
-        print(f"Found categories: {rank_model.categories}")
 
+    is_first_line = True
     printed_entries = 0
 
     fh = VariantFile(vcf)
     for record in fh:
-        rank_score_field = record.info.get("RankScore")
-        rank_score = float(rank_score_field[0].split(":")[1])
+
+        if is_first_line:
+            header_fields = str(record.header).rstrip().split("\n")[-1].split("\t")
+            if print_full:
+                print("\t".join(header_fields))
+            elif columns is not None:
+                selected_fields = [header_fields[i] for i in columns]
+                selected_fields.append("RankScore")
+
+                if rank_model is not None:
+                    selected_fields = selected_fields + rank_model.categories
+
+                print("\t".join(selected_fields))
+            else:
+                if rank_model is not None:
+                    header = ["RankScore"] + rank_model.categories
+                    print("\t".join(header))
+            is_first_line = False
+
+        rank_score_field = record.info.get("RankScore")[0]
+        rank_score = float(rank_score_field.split(":")[1])
+
+        rank_subscores = None
+        if rank_model is not None:
+            rank_subscore_field = record.info.get("RankResult")[0]
+            rank_subscores = [int(score) for score in rank_subscore_field.split("|")]
 
         if comp_type == "equal" and rank_score == comp_val:
-            print_helper(record, rank_score, print_full, columns, rank_model)
+            print_helper(
+                record, rank_score, print_full, columns, rank_model, rank_subscores
+            )
             printed_entries += 1
         elif comp_type == "greater" and rank_score > comp_val:
-            print_helper(record, rank_score, print_full, columns, rank_model)
+            print_helper(
+                record, rank_score, print_full, columns, rank_model, rank_subscores
+            )
             printed_entries += 1
         elif comp_type == "less" and rank_score < comp_val:
-            print_helper(record, rank_score, print_full, columns, rank_model)
+            print_helper(
+                record, rank_score, print_full, columns, rank_model, rank_subscores
+            )
             printed_entries += 1
         elif comp_type == "lessorequal" and rank_score <= comp_val:
-            print_helper(record, rank_score, print_full, columns, rank_model)
+            print_helper(
+                record, rank_score, print_full, columns, rank_model, rank_subscores
+            )
             printed_entries += 1
         elif comp_type == "greaterorequal" and rank_score >= comp_val:
-            print_helper(record, rank_score, print_full, columns, rank_model)
+            print_helper(
+                record, rank_score, print_full, columns, rank_model, rank_subscores
+            )
             printed_entries += 1
         elif comp_type is None:
-            print_helper(record, rank_score, print_full, columns, rank_model)
+            print_helper(
+                record, rank_score, print_full, columns, rank_model, rank_subscores
+            )
             printed_entries += 1
 
         if printed_entries > head:
@@ -69,20 +105,26 @@ def print_helper(
     print_full: bool,
     columns: list[int] | None,
     rank_model: RankModel | None,
+    rank_subscores: list[int] | None,
 ):
 
     # breakpoint()
     if print_full:
         print(record, end="")
     elif columns is not None:
-        # pdb.set_trace()
         rec_fields = str(record).rstrip().split("\t")
         subset = [rec_fields[i] for i in columns]
         subset.append(str(rank_score))
-        # print(subset)
+
+        if rank_subscores is not None:
+            subset = subset + [str(score) for score in rank_subscores]
+
         print("\t".join(subset))
     else:
-        print(rank_score)
+        if rank_subscores is not None:
+            print([rank_score] + [str(score) for score in rank_subscores])
+        else:
+            print(rank_score)
 
 
 def filter_info(
