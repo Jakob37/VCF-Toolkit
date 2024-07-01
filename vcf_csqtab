@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+
+import argparse
+from pysam import VariantFile
+
+def main():
+    args = parse_arguments()
+    vcf = VariantFile(args.input)
+
+    # first_rec = next(vcf)
+
+    vcf_header = vcf.header
+    csq_info = vcf_header.info['CSQ']
+    csq_fields_head = csq_info.description.split("Format: ")[1].split("|")
+
+    lead_head = ["Chrom", "Pos", "Allele"]
+    combined_head = lead_head + csq_fields_head
+
+    print("\t".join(combined_head))
+
+    # max_count = 10
+    for rec in vcf:
+        pos = str(rec.pos)
+        alleles = "/".join(rec.alleles)
+        chrom = rec.chrom
+
+        lead = [chrom, pos, alleles]
+
+        csqs = rec.info['CSQ']
+        for csq in csqs:
+            csq_fields = csq.split("|")
+            combined = lead + csq_fields
+            print('\t'.join(combined))
+
+        # max_count -= 1
+        # if max_count == 0:
+        #     break
+
+    # print(vcf)
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description="Print CSQ entries in tab format"
+    )
+    parser.add_argument("--input", help="Input VCF file", required=True)
+    parser.add_argument("--filter", default=None, type=str, help="Only print lines matching regex")
+    args = parser.parse_args()
+    return args
+
+if __name__ == "__main__":
+    main()
