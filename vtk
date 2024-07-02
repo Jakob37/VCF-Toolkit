@@ -109,6 +109,14 @@ def main():
             if args.filter is not None:
                 run_args.append(args.filter)
             subprocess.run(run_args)
+    elif args.subcommand == "csqpy":
+        print("csqpy")
+        run_args = [fp("vcf_csqpy"), args.vcf]
+        if args.chr is not None:
+            run_args.extend(["--chr", args.chr])
+        if args.pos is not None:
+            run_args.extend(["--pos", str(args.pos)])
+        subprocess.run(run_args)
     elif args.subcommand == "csqtab":
         for vcf in vcfs:
             if not single_match:
@@ -194,6 +202,7 @@ def parse_arguments():
     add_info(subparsers)
     add_csq(subparsers)
     add_csqtab(subparsers)
+    add_csqpy(subparsers)
     add_sum(subparsers)
     add_get(subparsers)
     add_qualhist(subparsers)
@@ -249,6 +258,13 @@ def add_csqtab(subparsers):
     parser = subparsers.add_parser("csqtab")
     parser.add_argument("vcf", nargs="*")
     parser.add_argument("--filter", default=None)
+
+
+def add_csqpy(subparsers):
+    parser = subparsers.add_parser("csqpy")
+    parser.add_argument("vcf")
+    parser.add_argument("--chr", default="1")
+    parser.add_argument("--pos", default=0)
 
 
 def add_sum(subparsers):

@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+
+import argparse
+from pysam import VariantFile
+
+def main():
+    args = parse_arguments()
+
+    vcf = VariantFile(args.vcf)
+    vcf_header = vcf.header
+    csq_info = vcf_header.info['CSQ']
+    csq_annots = csq_info.description.split("Format: ")[1].split("|")
+    csq_rows = [[annot] for annot in csq_annots]
+
+    rec = next(vcf.fetch(contig=args.chr, start=args.pos))
+
+    alleles = "/".join(rec.alleles)
+    print(f"{rec.contig}:{rec.pos}:{alleles}")
+
+    csqs = rec.info['CSQ']
+    for csq in csqs:
+        csq_fields = csq.split("|")
+        for (ind, field) in enumerate(csq_fields):
+            csq_rows[ind].append(field)
+
+    for csq_row in csq_rows:
+        print("\t".join(csq_row))
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("vcf", help="The VCF")
+    parser.add_argument("--chr", help="Chromosome to search", default="1")
+    parser.add_argument("--pos", help="Position to start searching", default=0, type=int)
+    args = parser.parse_args()
+    return args
+
+if __name__ == "__main__":
+    main()
