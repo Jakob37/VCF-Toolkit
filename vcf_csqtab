@@ -7,8 +7,6 @@ def main():
     args = parse_arguments()
     vcf = VariantFile(args.input)
 
-    # first_rec = next(vcf)
-
     vcf_header = vcf.header
     csq_info = vcf_header.info['CSQ']
     csq_fields_head = csq_info.description.split("Format: ")[1].split("|")
@@ -16,10 +14,27 @@ def main():
     lead_head = ["Chrom", "Pos", "Allele"]
     combined_head = lead_head + csq_fields_head
 
-    print("\t".join(combined_head))
+    limit_columns_i = []
+    print_head = []
+    if args.columns is not None:
+        print_cols = args.columns.split(",")
+        for i, name in enumerate(combined_head):
+            if name in print_cols:
+                limit_columns_i.append(i)
+
+                print_head.append(name)
+
+    if len(print_head) > 0:
+        print("\t".join(print_head))
+    else:
+        print("\t".join(combined_head))
+
+    search_space = vcf
+    if args.chr is not None and args.pos is not None:
+        search_space = vcf.fetch(args.chr, int(args.pos) - 1, int(args.pos))
 
     # max_count = 10
-    for rec in vcf:
+    for rec in search_space:
         pos = str(rec.pos)
         alleles = "/".join(rec.alleles)
         chrom = rec.chrom
@@ -30,20 +45,22 @@ def main():
         for csq in csqs:
             csq_fields = csq.split("|")
             combined = lead + csq_fields
-            print('\t'.join(combined))
 
-        # max_count -= 1
-        # if max_count == 0:
-        #     break
+            if len(limit_columns_i) > 0:
+                print_cols = [val for i, val in enumerate(combined) if i in limit_columns_i]
+            else:
+                print_cols = combined
 
-    # print(vcf)
+            print('\t'.join(print_cols))
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Print CSQ entries in tab format"
     )
     parser.add_argument("--input", help="Input VCF file", required=True)
-    parser.add_argument("--filter", default=None, type=str, help="Only print lines matching regex")
+    parser.add_argument("--chr", default=None, type=str, help="Only print in this chromosome")
+    parser.add_argument("--pos", default=None, type=str, help="Only print in this position")
+    parser.add_argument("--columns", default=None, type=str, help="Limit output to these columns")
     args = parser.parse_args()
     return args
 

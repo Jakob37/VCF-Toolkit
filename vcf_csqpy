@@ -12,7 +12,7 @@ def main():
     csq_annots = csq_info.description.split("Format: ")[1].split("|")
     csq_rows = [[annot] for annot in csq_annots]
 
-    rec = next(vcf.fetch(contig=args.chr, start=args.pos))
+    rec = next(vcf.fetch(contig=args.chr, start=args.pos - 1))
 
     alleles = "/".join(rec.alleles)
     print(f"{rec.contig}:{rec.pos}:{alleles}")

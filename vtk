@@ -122,8 +122,12 @@ def main():
             if not single_match:
                 print(vcf)
             run_args = [fp("vcf_csqtab"), "--input", vcf]
-            if args.filter is not None:
-                run_args.append(args.filter)
+            if args.chr is not None:
+                run_args.extend(["--chr", args.chr])
+            if args.pos is not None:
+                run_args.extend(["--pos", args.pos])
+            if args.columns is not None:
+                run_args.extend(["--columns", args.columns])
             subprocess.run(run_args)
     elif args.subcommand == "get":
         for vcf in vcfs:
@@ -257,7 +261,9 @@ def add_csq(subparsers):
 def add_csqtab(subparsers):
     parser = subparsers.add_parser("csqtab")
     parser.add_argument("vcf", nargs="*")
-    parser.add_argument("--filter", default=None)
+    parser.add_argument("--chr", default=None, help="Filter position. Use together with --pos.")
+    parser.add_argument("--pos", default=None, help="Filter position. Use together with --chr.")
+    parser.add_argument("--columns", default=None, help="Print only specific columns.")
 
 
 def add_csqpy(subparsers):
