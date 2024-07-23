@@ -1,8 +1,6 @@
 from typing import Callable
 from pysam import VariantFile, VariantRecord
 
-import pdb
-
 from classes.rankmodel import RankModel
 
 
