@@ -187,6 +187,8 @@ def main():
             )
     elif args.subcommand == "snvdiff":
         python_utils.snv_diff(args.vcf1, args.vcf2, args.print_recs)
+    elif args.subcommand == "scorediff":
+        python_utils.score_diff(args.vcf1, args.vcf2)
     else:
         raise ValueError("No known subcommand")
 
@@ -214,6 +216,7 @@ def parse_arguments():
     add_infofilter(subparsers)
     add_snvdiff(subparsers)
     add_rankscore(subparsers)
+    add_scorediff(subparsers)
 
     args = parent_parser.parse_args()
     return args
@@ -261,8 +264,12 @@ def add_csq(subparsers):
 def add_csqtab(subparsers):
     parser = subparsers.add_parser("csqtab")
     parser.add_argument("vcf", nargs="*")
-    parser.add_argument("--chr", default=None, help="Filter position. Use together with --pos.")
-    parser.add_argument("--pos", default=None, help="Filter position. Use together with --chr.")
+    parser.add_argument(
+        "--chr", default=None, help="Filter position. Use together with --pos."
+    )
+    parser.add_argument(
+        "--pos", default=None, help="Filter position. Use together with --chr."
+    )
     parser.add_argument("--columns", default=None, help="Print only specific columns.")
 
 
@@ -352,6 +359,17 @@ def add_rankscore(subparsers):
     parser.add_argument("--columns", default=None, help="Comma separated string")
     parser.add_argument("--rank_model", default=None)
     parser.add_argument("--head", default=math.inf, type=int)
+
+
+def add_scorediff(subparsers):
+    parser = subparsers.add_parser(
+        "scorediff", description="Diff variants on their rank scores"
+    )
+    parser.add_argument("vcf1")
+    parser.add_argument("vcf2")
+    parser.add_argument(
+        "--vcf", help="FIXME: Placeholder as all other commands expects VCFs"
+    )
 
 
 if __name__ == "__main__":

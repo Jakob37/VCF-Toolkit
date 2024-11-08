@@ -202,10 +202,61 @@ def snv_diff(vcf1: str, vcf2: str, print_recs: bool):
             print(f"vcf2\t{rec}")
 
 
+def score_diff(vcf1: str, vcf2: str):
+    vcf1_recs = make_recs_dict(vcf1)
+    vcf2_recs = make_recs_dict(vcf2)
+
+    shared_keys = vcf1_recs.keys() & vcf2_recs.keys()
+
+    def sort_lambda(key: str):
+        (chrom, pos, _ref, _alt) = key.split("_")
+        return (chrom, int(pos))
+
+    nbr_skipped = 0
+    for key in sorted(shared_keys, key=sort_lambda):
+
+        vcf1_rec = vcf1_recs[key]
+        vcf2_rec = vcf2_recs[key]
+        if vcf1_rec.info.get("RankScore") is None or vcf2_rec.info.get("RankScore") is None:
+            nbr_skipped += 1
+            continue
+
+        vcf1_rank_score = int(
+            vcf1_rec.info["RankScore"][0].split(":")[1].replace(".0", "")
+        )
+        vcf1_rank_result = [
+            int(val) for val in vcf1_rec.info["RankResult"][0].split("|")
+        ]
+
+        vcf2_rank_score = int(
+            vcf2_rec.info["RankScore"][0].split(":")[1].replace(".0", "")
+        )
+        vcf2_rank_result = [
+            int(val) for val in vcf2_rec.info["RankResult"][0].split("|")
+        ]
+
+        if vcf1_rank_score != vcf2_rank_score:
+            (chrom, pos, ref, alt) = key.split("_")
+            fields = [
+                chrom,
+                str(pos),
+                ref,
+                alt,
+                str(vcf1_rank_score),
+                str(vcf2_rank_score),
+                "|".join([str(val) for val in vcf1_rank_result]),
+                "|".join([str(val) for val in vcf2_rank_result]),
+            ]
+            print("\t".join(fields))
+    print(f"Number skipped: {nbr_skipped}")
+
+
 def make_recs_dict(vcf_path: str) -> dict[str, VariantRecord]:
     fh = VariantFile(vcf_path)
     variant_recs = dict()
     for record in fh:
-        key = f"{record.chrom}:{record.pos}:{'/'.join(record.alts)}"
+        if record.alts is None:
+            continue
+        key = f"{record.chrom}_{record.pos}_{record.ref}_{'/'.join(record.alts)}"
         variant_recs[key] = record
     return variant_recs

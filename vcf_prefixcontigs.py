@@ -50,4 +50,10 @@ def parse_arguments():
 
 
 if __name__ == "__main__":
+
+    def add_one(val: int) -> int:
+        return val + 1
+    
+    add_one("a")
+
     main()
