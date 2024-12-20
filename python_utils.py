@@ -213,8 +213,8 @@ def snv_single_diff(
 
 
 def snv_diff(vcf1: str, vcf2: str, print_recs: bool, simple: bool, per_contig: bool, header: bool):
-    vcf1_recs = make_recs_dict(vcf1)
-    vcf2_recs = make_recs_dict(vcf2)
+    vcf1_recs = make_recs_dict(vcf1, trim_chr=True)
+    vcf2_recs = make_recs_dict(vcf2, trim_chr=True)
 
     vcf1_keys = set(vcf1_recs.keys())
     vcf2_keys = set(vcf2_recs.keys())
@@ -280,12 +280,17 @@ def score_diff(vcf1: str, vcf2: str):
     print(f"Number skipped: {nbr_skipped}")
 
 
-def make_recs_dict(vcf_path: str) -> dict[str, VariantRecord]:
+def make_recs_dict(vcf_path: str, trim_chr: bool = False) -> dict[str, VariantRecord]:
+
     fh = VariantFile(vcf_path)
     variant_recs: dict[str, VariantRecord] = dict()
     for record in fh:
         if record.alts is None:
             continue
-        key = f"{record.chrom}_{record.pos}_{record.ref}_{'/'.join(record.alts)}"
+        chrom = record.chrom
+        if trim_chr:
+            if chrom.startswith("chr"):
+                chrom = chrom.replace("chr", "", 1)
+        key = f"{chrom}_{record.pos}_{record.ref}_{'/'.join(record.alts)}"
         variant_recs[key] = record
     return variant_recs
