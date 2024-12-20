@@ -178,7 +178,6 @@ def snv_single_diff(
     vcf1_recs: dict[str, VariantRecord],
     vcf2_recs: dict[str, VariantRecord],
     print_recs: bool,
-    simple: bool,
     has_header: bool,
     prefix: str | None
 ):
@@ -186,25 +185,23 @@ def snv_single_diff(
     vcf1_only = vcf1_keys.difference(vcf2_keys)
     vcf2_only = vcf2_keys.difference(vcf1_keys)
 
-    if print_recs and simple:
-        raise ValueError("Cannot be both simple and in print_recs mode")
+    vcf1_total = str(len(vcf1_keys))
+    vcf2_total = str(len(vcf2_keys))
+    vcf1_only_count = str(len(vcf1_only))
+    vcf2_only_count = str(len(vcf2_only))
+    shared = str(len(vcf1_keys.intersection(vcf2_keys)))
 
-    if simple:
-        header = ["prefix", "vcf1_nrec", "vcf2_nrec", "vcf1_only", "vcf2_only"]
-        values = [str(len(vcf1_keys)),  str(len(vcf2_keys)), str(len(vcf1_only)), str(len(vcf2_only))]
+    if not print_recs:
+        header = ["vcf1_nrec", "vcf2_nrec", "vcf1_only", "vcf2_only", "shared"]
+        values = [vcf1_total, vcf2_total, vcf1_only_count, vcf2_only_count, shared]
         if prefix:
             header.insert(0, "prefix")
             values.insert(0, prefix)
         
         if has_header:
-            print("#" + "\t".join(values))
+            print("#" + "\t".join(header))
         print("\t".join(values))
 
-    elif not print_recs:
-        string_prefix = ""
-        if prefix:
-            string_prefix = f"{prefix}: "
-        print(f"{string_prefix}{len(vcf1_only)} only in VCF1, {len(vcf2_only)} only in VCF2")
     else:
         for key in vcf1_only:
             rec = vcf1_recs[key]
@@ -214,7 +211,7 @@ def snv_single_diff(
             print(f"vcf2\t{rec}")
 
 
-def snv_diff(vcf1: str, vcf2: str, print_recs: bool, simple: bool, per_contig: bool, header: bool):
+def snv_diff(vcf1: str, vcf2: str, print_recs: bool, per_contig: bool, header: bool):
     vcf1_recs = make_recs_dict(vcf1, trim_chr=True)
     vcf2_recs = make_recs_dict(vcf2, trim_chr=True)
 
@@ -236,9 +233,9 @@ def snv_diff(vcf1: str, vcf2: str, print_recs: bool, simple: bool, per_contig: b
         for contig in sorted(all_contigs, key=chromosome_sort):
             vcf1_only = vcf1_keys_per_contig[contig]
             vcf2_only = vcf2_keys_per_contig[contig]
-            snv_single_diff(vcf1_only, vcf2_only, vcf1_recs, vcf2_recs, print_recs, simple, header, prefix=contig)
+            snv_single_diff(vcf1_only, vcf2_only, vcf1_recs, vcf2_recs, print_recs, header, prefix=contig)
     else:
-        snv_single_diff(vcf1_keys, vcf2_keys, vcf1_recs, vcf2_recs, print_recs, simple, header, prefix=None)
+        snv_single_diff(vcf1_keys, vcf2_keys, vcf1_recs, vcf2_recs, print_recs, header, prefix=None)
 
 
 def score_diff(vcf1: str, vcf2: str):
