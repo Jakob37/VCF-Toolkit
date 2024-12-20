@@ -5,6 +5,8 @@ from pysam import VariantFile, VariantRecord
 from classes.rankmodel import RankModel
 from classes.utils import chromosome_sort
 
+import sys
+
 
 def print_rankscore(
     vcf: str,
@@ -284,12 +286,18 @@ def make_recs_dict(vcf_path: str, trim_chr: bool = False) -> dict[str, VariantRe
 
     fh = VariantFile(vcf_path)
     variant_recs: dict[str, VariantRecord] = dict()
+
+    user_noticed_about_trim = False
+
     for record in fh:
         if record.alts is None:
             continue
         chrom = record.chrom
         if trim_chr:
             if chrom.startswith("chr"):
+                if not user_noticed_about_trim:
+                    print("Found chr prefixed contigs, trimming", file=sys.stderr)
+                    user_noticed_about_trim = True
                 chrom = chrom.replace("chr", "", 1)
         key = f"{chrom}_{record.pos}_{record.ref}_{'/'.join(record.alts)}"
         variant_recs[key] = record
