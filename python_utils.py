@@ -194,6 +194,7 @@ def snv_diff(vcf1: str, vcf2: str, print_recs: bool, simple: bool):
         raise ValueError("Cannot be both simple and in print_recs mode")
 
     if simple:
+        print("#" + "\t".join(["vcf1_nrec", "vcf2_nrec", "vcf1_only", "vcf2_only"]))
         print(f"{len(vcf1_keys)}\t{len(vcf2_keys)}\t{len(vcf1_only)}\t{len(vcf2_only)}")
     elif not print_recs:
         print(f"{len(vcf1_only)} only in VCF1, {len(vcf2_only)} only in VCF2")
