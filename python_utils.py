@@ -3,6 +3,7 @@ from typing import Callable
 from pysam import VariantFile, VariantRecord
 
 from classes.rankmodel import RankModel
+from classes.utils import chromosome_sort
 
 
 def print_rankscore(
@@ -230,7 +231,7 @@ def snv_diff(vcf1: str, vcf2: str, print_recs: bool, simple: bool, per_contig: b
             vcf2_keys_per_contig[vcf2_contig].add(vcf2_key)
 
         all_contigs = set(vcf1_keys_per_contig.keys()).union(vcf2_keys_per_contig.keys())
-        for contig in sorted(all_contigs):
+        for contig in sorted(all_contigs, key=chromosome_sort):
             vcf1_only = vcf1_keys_per_contig[contig]
             vcf2_only = vcf2_keys_per_contig[contig]
             snv_single_diff(vcf1_only, vcf2_only, vcf1_recs, vcf2_recs, print_recs, simple, header, prefix=contig)
