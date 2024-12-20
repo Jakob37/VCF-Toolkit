@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Callable
 from pysam import VariantFile, VariantRecord
 
@@ -63,34 +64,22 @@ def print_rankscore(
             rank_subscores = [int(score) for score in rank_subscore_field.split("|")]
 
         if comp_type == "equal" and rank_score == comp_val:
-            print_helper(
-                record, rank_score, print_full, columns, rank_subscores
-            )
+            print_helper(record, rank_score, print_full, columns, rank_subscores)
             printed_entries += 1
         elif comp_type == "greater" and rank_score > comp_val:
-            print_helper(
-                record, rank_score, print_full, columns, rank_subscores
-            )
+            print_helper(record, rank_score, print_full, columns, rank_subscores)
             printed_entries += 1
         elif comp_type == "less" and rank_score < comp_val:
-            print_helper(
-                record, rank_score, print_full, columns, rank_subscores
-            )
+            print_helper(record, rank_score, print_full, columns, rank_subscores)
             printed_entries += 1
         elif comp_type == "lessorequal" and rank_score <= comp_val:
-            print_helper(
-                record, rank_score, print_full, columns, rank_subscores
-            )
+            print_helper(record, rank_score, print_full, columns, rank_subscores)
             printed_entries += 1
         elif comp_type == "greaterorequal" and rank_score >= comp_val:
-            print_helper(
-                record, rank_score, print_full, columns, rank_subscores
-            )
+            print_helper(record, rank_score, print_full, columns, rank_subscores)
             printed_entries += 1
         elif comp_type is None:
-            print_helper(
-                record, rank_score, print_full, columns, rank_subscores
-            )
+            print_helper(record, rank_score, print_full, columns, rank_subscores)
             printed_entries += 1
 
         if printed_entries > head:
@@ -180,12 +169,15 @@ def filter_info(
         print(f"Number missing: {nbr_missing}")
 
 
-def snv_diff(vcf1: str, vcf2: str, print_recs: bool, simple: bool):
-    vcf1_recs = make_recs_dict(vcf1)
-    vcf2_recs = make_recs_dict(vcf2)
-
-    vcf1_keys = set(vcf1_recs.keys())
-    vcf2_keys = set(vcf2_recs.keys())
+def snv_single_diff(
+    vcf1_keys: set[str],
+    vcf2_keys: set[str],
+    vcf1_recs: dict[str, VariantRecord],
+    vcf2_recs: dict[str, VariantRecord],
+    print_recs: bool,
+    simple: bool,
+    prefix: str | None
+):
 
     vcf1_only = vcf1_keys.difference(vcf2_keys)
     vcf2_only = vcf2_keys.difference(vcf1_keys)
@@ -194,10 +186,19 @@ def snv_diff(vcf1: str, vcf2: str, print_recs: bool, simple: bool):
         raise ValueError("Cannot be both simple and in print_recs mode")
 
     if simple:
-        print("#" + "\t".join(["vcf1_nrec", "vcf2_nrec", "vcf1_only", "vcf2_only"]))
-        print(f"{len(vcf1_keys)}\t{len(vcf2_keys)}\t{len(vcf1_only)}\t{len(vcf2_only)}")
+        header = ["prefix", "vcf1_nrec", "vcf2_nrec", "vcf1_only", "vcf2_only"]
+        values = [str(len(vcf1_keys)),  str(len(vcf2_keys)), str(len(vcf1_only)), str(len(vcf2_only))]
+        if prefix:
+            header.insert(0, "prefix")
+            values.insert(0, prefix)
+        print("#" + "\t".join(values))
+        print("\t".join(values))
+
     elif not print_recs:
-        print(f"{len(vcf1_only)} only in VCF1, {len(vcf2_only)} only in VCF2")
+        string_prefix = ""
+        if prefix:
+            string_prefix = f"{prefix}: "
+        print(f"{string_prefix}{len(vcf1_only)} only in VCF1, {len(vcf2_only)} only in VCF2")
     else:
         for key in vcf1_only:
             rec = vcf1_recs[key]
@@ -205,6 +206,33 @@ def snv_diff(vcf1: str, vcf2: str, print_recs: bool, simple: bool):
         for key in vcf2_only:
             rec = vcf2_recs[key]
             print(f"vcf2\t{rec}")
+
+
+def snv_diff(vcf1: str, vcf2: str, print_recs: bool, simple: bool, per_contig: bool):
+    vcf1_recs = make_recs_dict(vcf1)
+    vcf2_recs = make_recs_dict(vcf2)
+
+    vcf1_keys = set(vcf1_recs.keys())
+    vcf2_keys = set(vcf2_recs.keys())
+
+    if per_contig:
+        vcf1_keys_per_contig: dict[str, set[str]] = defaultdict(set)
+        for vcf1_key in vcf1_keys:
+            vcf1_contig, _ = vcf1_key.split("_", 1)
+            vcf1_keys_per_contig[vcf1_contig].add(vcf1_key)
+
+        vcf2_keys_per_contig: dict[str, set[str]] = defaultdict(set)
+        for vcf2_key in vcf2_keys:
+            vcf2_contig, _ = vcf2_key.split("_", 1)
+            vcf2_keys_per_contig[vcf2_contig].add(vcf2_key)
+
+        all_contigs = set(vcf1_keys_per_contig.keys()).union(vcf2_keys_per_contig.keys())
+        for contig in all_contigs:
+            vcf1_only = vcf1_keys_per_contig[contig]
+            vcf2_only = vcf2_keys_per_contig[contig]
+            snv_single_diff(vcf1_only, vcf2_only, vcf1_recs, vcf2_recs, print_recs, simple, prefix=contig)
+    else:
+        snv_single_diff(vcf1_keys, vcf2_keys, vcf1_recs, vcf2_recs, print_recs, simple)
 
 
 def score_diff(vcf1: str, vcf2: str):
@@ -226,19 +254,11 @@ def score_diff(vcf1: str, vcf2: str):
             nbr_skipped += 1
             continue
 
-        vcf1_rank_score = int(
-            vcf1_rec.info["RankScore"][0].split(":")[1].replace(".0", "")
-        )
-        vcf1_rank_result = [
-            int(val) for val in vcf1_rec.info["RankResult"][0].split("|")
-        ]
+        vcf1_rank_score = int(vcf1_rec.info["RankScore"][0].split(":")[1].replace(".0", ""))
+        vcf1_rank_result = [int(val) for val in vcf1_rec.info["RankResult"][0].split("|")]
 
-        vcf2_rank_score = int(
-            vcf2_rec.info["RankScore"][0].split(":")[1].replace(".0", "")
-        )
-        vcf2_rank_result = [
-            int(val) for val in vcf2_rec.info["RankResult"][0].split("|")
-        ]
+        vcf2_rank_score = int(vcf2_rec.info["RankScore"][0].split(":")[1].replace(".0", ""))
+        vcf2_rank_result = [int(val) for val in vcf2_rec.info["RankResult"][0].split("|")]
 
         if vcf1_rank_score != vcf2_rank_score:
             (chrom, pos, ref, alt) = key.split("_")
