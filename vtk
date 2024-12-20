@@ -186,7 +186,7 @@ def main():
                 args.head,
             )
     elif args.subcommand == "snvdiff":
-        python_utils.snv_diff(args.vcf1, args.vcf2, args.print_recs)
+        python_utils.snv_diff(args.vcf1, args.vcf2, args.print_recs, args.simple)
     elif args.subcommand == "scorediff":
         python_utils.score_diff(args.vcf1, args.vcf2)
     else:
@@ -342,6 +342,7 @@ def add_snvdiff(subparsers):
         "--vcf", help="FIXME: Placeholder as all other commands expects VCFs"
     )
     parser.add_argument("--print_recs", action="store_true")
+    parser.add_argument("--simple", action="store_true")
 
 
 def add_rankscore(subparsers):

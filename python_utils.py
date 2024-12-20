@@ -10,7 +10,7 @@ def print_rankscore(
     comp_type: str | None,
     print_full: bool,
     rank_model_fp: str | None,
-    columns_str: list[str] | None,
+    columns_str: str | None,
     head: int,
 ):
     assert (
@@ -64,32 +64,32 @@ def print_rankscore(
 
         if comp_type == "equal" and rank_score == comp_val:
             print_helper(
-                record, rank_score, print_full, columns, rank_model, rank_subscores
+                record, rank_score, print_full, columns, rank_subscores
             )
             printed_entries += 1
         elif comp_type == "greater" and rank_score > comp_val:
             print_helper(
-                record, rank_score, print_full, columns, rank_model, rank_subscores
+                record, rank_score, print_full, columns, rank_subscores
             )
             printed_entries += 1
         elif comp_type == "less" and rank_score < comp_val:
             print_helper(
-                record, rank_score, print_full, columns, rank_model, rank_subscores
+                record, rank_score, print_full, columns, rank_subscores
             )
             printed_entries += 1
         elif comp_type == "lessorequal" and rank_score <= comp_val:
             print_helper(
-                record, rank_score, print_full, columns, rank_model, rank_subscores
+                record, rank_score, print_full, columns, rank_subscores
             )
             printed_entries += 1
         elif comp_type == "greaterorequal" and rank_score >= comp_val:
             print_helper(
-                record, rank_score, print_full, columns, rank_model, rank_subscores
+                record, rank_score, print_full, columns, rank_subscores
             )
             printed_entries += 1
         elif comp_type is None:
             print_helper(
-                record, rank_score, print_full, columns, rank_model, rank_subscores
+                record, rank_score, print_full, columns, rank_subscores
             )
             printed_entries += 1
 
@@ -98,11 +98,10 @@ def print_rankscore(
 
 
 def print_helper(
-    record,
-    rank_score: int,
+    record: VariantRecord,
+    rank_score: float,
     print_full: bool,
     columns: list[int] | None,
-    rank_model: RankModel | None,
     rank_subscores: list[int] | None,
 ):
 
@@ -181,7 +180,7 @@ def filter_info(
         print(f"Number missing: {nbr_missing}")
 
 
-def snv_diff(vcf1: str, vcf2: str, print_recs: bool):
+def snv_diff(vcf1: str, vcf2: str, print_recs: bool, simple: bool):
     vcf1_recs = make_recs_dict(vcf1)
     vcf2_recs = make_recs_dict(vcf2)
 
@@ -191,7 +190,12 @@ def snv_diff(vcf1: str, vcf2: str, print_recs: bool):
     vcf1_only = vcf1_keys.difference(vcf2_keys)
     vcf2_only = vcf2_keys.difference(vcf1_keys)
 
-    if not print_recs:
+    if print_recs and simple:
+        raise ValueError("Cannot be both simple and in print_recs mode")
+
+    if simple:
+        print(f"{len(vcf1_keys)}\t{len(vcf2_keys)}\t{len(vcf1_only)}\t{len(vcf2_only)}")
+    elif not print_recs:
         print(f"{len(vcf1_only)} only in VCF1, {len(vcf2_only)} only in VCF2")
     else:
         for key in vcf1_only:
@@ -253,7 +257,7 @@ def score_diff(vcf1: str, vcf2: str):
 
 def make_recs_dict(vcf_path: str) -> dict[str, VariantRecord]:
     fh = VariantFile(vcf_path)
-    variant_recs = dict()
+    variant_recs: dict[str, VariantRecord] = dict()
     for record in fh:
         if record.alts is None:
             continue
