@@ -229,11 +229,15 @@ def snv_diff(vcf1: str, vcf2: str, print_recs: bool, per_contig: bool, header: b
             vcf2_contig, _ = vcf2_key.split("_", 1)
             vcf2_keys_per_contig[vcf2_contig].add(vcf2_key)
 
+        header_to_print = header
+
         all_contigs = set(vcf1_keys_per_contig.keys()).union(vcf2_keys_per_contig.keys())
         for contig in sorted(all_contigs, key=chromosome_sort):
             vcf1_only = vcf1_keys_per_contig[contig]
             vcf2_only = vcf2_keys_per_contig[contig]
-            snv_single_diff(vcf1_only, vcf2_only, vcf1_recs, vcf2_recs, print_recs, header, prefix=contig)
+            snv_single_diff(vcf1_only, vcf2_only, vcf1_recs, vcf2_recs, print_recs, header_to_print, prefix=contig)
+            if header_to_print:
+                header_to_print = False
     else:
         snv_single_diff(vcf1_keys, vcf2_keys, vcf1_recs, vcf2_recs, print_recs, header, prefix=None)
 
