@@ -189,6 +189,13 @@ def main():
         python_utils.snv_diff(args.vcf1, args.vcf2, args.print_recs, args.per_contig, args.header)
     elif args.subcommand == "scorediff":
         python_utils.score_diff(args.vcf1, args.vcf2)
+    elif args.subcommand == "cut":
+        for vcf in vcfs:
+            if not single_match:
+                print(vcf)
+            cols = [int(col) for col in args.cols.split(",")] if args.cols else []
+            info_keys = args.info.split(",") if args.info else []
+            python_utils.cut(vcf, cols, info_keys)
     else:
         raise ValueError("No known subcommand")
 
@@ -217,6 +224,7 @@ def parse_arguments():
     add_snvdiff(subparsers)
     add_rankscore(subparsers)
     add_scorediff(subparsers)
+    add_cut(subparsers)
 
     args = parent_parser.parse_args()
     return args
@@ -372,6 +380,13 @@ def add_scorediff(subparsers):
     parser.add_argument(
         "--vcf", help="FIXME: Placeholder as all other commands expects VCFs"
     )
+
+
+def add_cut(subparsers):
+    parser = subparsers.add_parser("cut", description="Cut VCF on column numbers and INFO keys")
+    parser.add_argument("vcf", nargs="*")
+    parser.add_argument("-c", "--cols", help="Columns (comma separated integers)")
+    parser.add_argument("-i", "--info", help="Info keys (comma separated strings)")
 
 
 if __name__ == "__main__":

@@ -1,11 +1,12 @@
 from collections import defaultdict
-from typing import Callable
+from typing import Callable, TextIO
 from pysam import VariantFile, VariantRecord
 
 from classes.rankmodel import RankModel
 from classes.utils import chromosome_sort
 
 import sys
+import gzip
 
 
 def print_rankscore(
@@ -179,7 +180,7 @@ def snv_single_diff(
     vcf2_recs: dict[str, VariantRecord],
     print_recs: bool,
     has_header: bool,
-    prefix: str | None
+    prefix: str | None,
 ):
 
     vcf1_only = vcf1_keys.difference(vcf2_keys)
@@ -197,7 +198,7 @@ def snv_single_diff(
         if prefix:
             header.insert(0, "prefix")
             values.insert(0, prefix)
-        
+
         if has_header:
             print("#" + "\t".join(header))
         print("\t".join(values))
@@ -235,7 +236,15 @@ def snv_diff(vcf1: str, vcf2: str, print_recs: bool, per_contig: bool, header: b
         for contig in sorted(all_contigs, key=chromosome_sort):
             vcf1_only = vcf1_keys_per_contig[contig]
             vcf2_only = vcf2_keys_per_contig[contig]
-            snv_single_diff(vcf1_only, vcf2_only, vcf1_recs, vcf2_recs, print_recs, header_to_print, prefix=contig)
+            snv_single_diff(
+                vcf1_only,
+                vcf2_only,
+                vcf1_recs,
+                vcf2_recs,
+                print_recs,
+                header_to_print,
+                prefix=contig,
+            )
             if header_to_print:
                 header_to_print = False
     else:
@@ -303,3 +312,43 @@ def make_recs_dict(vcf_path: str, trim_chr: bool = False) -> dict[str, VariantRe
         key = f"{chrom}_{record.pos}_{record.ref}_{'/'.join(record.alts)}"
         variant_recs[key] = record
     return variant_recs
+
+
+def cut(vcf: str, col_indices: list[int], info_keys: list[str]):
+
+    with open_vcf_fh(vcf) as in_fh:
+        for line in in_fh:
+            if line.startswith("##"):
+                continue
+
+            line = line.rstrip()
+            fields = line.split("\t")
+
+            if line.startswith("#"):
+                header_fields = [fields[col_ind] for col_ind in col_indices] + info_keys
+                print("\t".join(header_fields))
+                continue
+
+            info_field = fields[7]
+            info_dict = make_info_dict(info_field)
+
+            index_fields = [fields[col_ind] for col_ind in col_indices]
+            info_fields = [info_dict[key] if info_dict.get(key) else "-" for key in info_keys]
+            out_fields = index_fields + info_fields
+            print("\t".join(out_fields))
+
+
+def open_vcf_fh(filepath: str) -> TextIO:
+    if filepath.endswith(".gz"):
+        return gzip.open(filepath, "rt")
+    else:
+        return open(filepath, "r")
+
+
+def make_info_dict(info_field: str) -> dict[str, str]:
+    info_fields = info_field.split(";")
+    info_dict = {}
+    for info_field in info_fields:
+        key, value = info_field.split("=")
+        info_dict[key] = value
+    return info_dict
